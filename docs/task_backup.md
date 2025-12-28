@@ -1,0 +1,31 @@
+# Task: Poppin Project
+
+- [x] Analyze current project state <!-- id: 0 -->
+- [x] Recover detailed implementation plan from previous session <!-- id: 11 -->
+- [x] Create persistent backup of plan and tasks in WSL <!-- id: 23 -->
+- [x] Backend Setup (Python 2nd Gen) <!-- id: 12 -->
+    - [x] Setup Firebase Project & Blaze Plan verification <!-- id: 13 -->
+    - [x] Initialize Python Cloud Functions environment <!-- id: 14 -->
+    - [x] Configure Firestore with `/cities` and `/events` skeletons <!-- id: 15 -->
+    - [x] Implement Unit Tests (pytest) <!-- id: 24 -->
+- [x] Core Logic Implementation <!-- id: 16 -->
+    - [x] Implement GeoNames Discovery (findNearby_cities) <!-- id: 17 -->
+    - [x] Implement Gemini Fetch (Search Grounding) for Braunschweig <!-- id: 18 -->
+    - [x] Implement City-Snapping algorithm <!-- id: 19 -->
+- [x] Verification <!-- id: 20 -->
+    - [x] Test Braunschweig fetch manually <!-- id: 21 -->
+    - [x] Verify Firestore population <!-- id: 22 -->
+
+- [x] Frontend Development (Expo / React Native) <!-- id: 25 -->
+    - [x] Initialize Expo Project (TypeScript, Blank Template) <!-- id: 26 -->
+    - [x] Setup Architecture (Services/API Layer) <!-- id: 30 -->
+        - [x] Create `EventService` Interface <!-- id: 31 -->
+        - [x] Implement `MockEventService` (UI Dev) <!-- id: 32 -->
+        - [ ] Implement `FirebaseEventService` (Prod) <!-- id: 33 -->
+    - [/] Implement UI (Mock-Mode) <!-- id: 28 -->
+        - [x] Map View Component <!-- id: 34 -->
+        - [x] Design Bubble View (Neon Nights Selected) <!-- id: 38 -->
+        - [ ] Bubble View Component (The "Poppin" Style) <!-- id: 36 -->
+        - [ ] View Switcher (Toggle between Map/Bubbles) <!-- id: 37 -->
+        - [ ] Event Detail Modal <!-- id: 35 -->
+    - [ ] Integrate Real Backend <!-- id: 29 -->
