@@ -1,33 +1,83 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text, SafeAreaView, Dimensions } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import MapScreen from './screens/MapScreen';
 import BubbleView from './screens/BubbleView';
-import { StatusBar } from 'expo-status-bar';
+
+const { width } = Dimensions.get('window');
+
+type TabType = 'bubble' | 'search' | 'calendar' | 'profile' | 'map';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'map' | 'bubble'>('bubble');
+  const [activeTab, setActiveTab] = useState<TabType>('bubble');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'bubble':
+        return <BubbleView />;
+      case 'map':
+        return <MapScreen />;
+      default:
+        return <BubbleView />; // Placeholder for other tabs
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style={viewMode === 'bubble' ? 'light' : 'dark'} />
+    <View style={styles.container}>
+      <StatusBar style="light" />
 
-      {viewMode === 'map' ? <MapScreen /> : <BubbleView />}
+      {renderContent()}
 
-      <View style={styles.tabBar}>
+      <BlurView intensity={80} tint="dark" style={styles.tabBar}>
         <TouchableOpacity
-          onPress={() => setViewMode('map')}
-          style={[styles.tabButton, viewMode === 'map' && styles.activeTab]}
+          onPress={() => setActiveTab('bubble')}
+          style={styles.tabButton}
         >
-          <Text style={[styles.tabText, viewMode === 'map' && styles.activeTabText]}>Map</Text>
+          <Ionicons
+            name="home"
+            size={28}
+            color={activeTab === 'bubble' ? '#FFF' : 'rgba(255,255,255,0.4)'}
+          />
+          {activeTab === 'bubble' && <View style={styles.activeGlow} />}
         </TouchableOpacity>
+
         <TouchableOpacity
-          onPress={() => setViewMode('bubble')}
-          style={[styles.tabButton, viewMode === 'bubble' && styles.activeTab]}
+          onPress={() => setActiveTab('map')}
+          style={styles.tabButton}
         >
-          <Text style={[styles.tabText, viewMode === 'bubble' && styles.activeTabText]}>Bubbles</Text>
+          <Ionicons
+            name="map-outline"
+            size={28}
+            color={activeTab === 'map' ? '#FFF' : 'rgba(255,255,255,0.4)'}
+          />
+          {activeTab === 'map' && <View style={styles.activeGlow} />}
         </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+
+        <TouchableOpacity
+          onPress={() => { }} // Placeholder
+          style={styles.tabButton}
+        >
+          <Ionicons
+            name="calendar-outline"
+            size={28}
+            color="rgba(255,255,255,0.4)"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => { }} // Placeholder
+          style={styles.tabButton}
+        >
+          <Ionicons
+            name="person-outline"
+            size={28}
+            color="rgba(255,255,255,0.4)"
+          />
+        </TouchableOpacity>
+      </BlurView>
+    </View>
   );
 }
 
@@ -38,31 +88,36 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    height: 60,
-    backgroundColor: 'rgba(20, 20, 20, 0.9)',
-    borderTopWidth: 1,
-    borderTopColor: '#333',
+    height: 90,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 25,
+    left: 20,
+    right: 20,
+    borderRadius: 35,
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingBottom: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  activeTab: {
-    backgroundColor: '#333',
-  },
-  tabText: {
-    color: '#888',
-    fontWeight: '600',
-  },
-  activeTabText: {
-    color: '#00F2FF',
+  activeGlow: {
+    position: 'absolute',
+    bottom: -4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFF',
+    shadowColor: '#FFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 5,
   },
 });

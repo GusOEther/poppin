@@ -41,4 +41,10 @@
     - [x] Update `FirebaseEventService` to call Cloud Function if Firestore is empty
     - [x] Deploy and test (Full backend sync verified ✓)
 
+- [x] UI Refinement (Neon Nights Mockup Match)
+    - [x] Install `expo-linear-gradient`
+    - [x] Refine `BubbleView.tsx` (Gradients, Glassmorphism, Header)
+    - [x] Refine `App.tsx` (Glassmorphic Tab Bar, Icons)
+    - [x] Verify visual match with mockup (User confirmed ✓)
+
 > **Note:** Update backups in `docs/` folder periodically!

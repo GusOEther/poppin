@@ -54,12 +54,29 @@ Update to:
 
 ---
 
+## Proposed UI Refinement (Neon Nights)
+
+### [Component] [Frontend - Dependencies]
+- [NEW] Install `expo-linear-gradient` for bubble gradients.
+- [NEW] Ensure `@expo/vector-icons` is available for the tab bar.
+
+### [Component] [Frontend - BubbleView.tsx]
+- [MODIFY] Update header: Bold "What's poppin'", add search icon.
+- [MODIFY] Update Bubble:
+  - Add `LinearGradient` background.
+  - Add semi-transparent frosted glass border (outer ring).
+  - Use bolder typography.
+- [MODIFY] Background: Add deep dark gradient.
+
+### [Component] [Frontend - App.tsx]
+- [MODIFY] Update Tab Bar:
+  - Implement frosted glass effect (blur/semi-transparency).
+  - Use icons instead of text.
+  - Add active state glow.
+
 ## Verification Plan
 
 ### Manual Verification
-1. Clear Firestore events for a test city (e.g., "Wolfsburg").
-2. Request events for "Wolfsburg" in the app.
-3. Verify that:
-   - The backend fetches events via Gemini.
-   - Events are saved to Firestore.
-   - The UI displays the new events.
+1. Compare the UI in the app with the provided mockup image.
+2. Verify that gradients, typography, and glassmorphism effects match.
+3. Check the tab bar icons and active states.
