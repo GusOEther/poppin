@@ -1,80 +1,65 @@
-# Implementation Plan: "What's poppin'?" (Restored)
+# Implementation Plan: Auto-Discovery Flow
 
-**POC: Braunschweig** | Event-Discovery mit animierten Bubbles
+When the app requests events for a city that has no data, the system should automatically trigger a fetch from the Gemini API, save the results, and return them to the UI.
 
----
+### [Backend] Cloud Functions (Python)
+- **`get_events_v1`**: API endpoint with auto-discovery (Gemini-fetch if zero results). Correctly handles CORS for web.
+- **`fetch_events_via_gemini`**: Core logic for event search with grounding.
+- **`process_and_save_events`**: Parses and stores events in Firestore.
 
-## Übersicht
+### [Frontend] Expo Web & Mobile
+- **`BubbleView.tsx`**: Interactive floating bubbles with "Neon Nights" design.
+- **`MapScreen.tsx`**: Map view for mobile (native) and list-placeholder for web.
+- **`EventDetailModal.tsx`**: Unified detail view for both mobile and web.
+- **`FirebaseEventService.ts`**: Handles Firestore data and triggers auto-discovery API.
 
-| Komponente | Technologie | Status |
-|------------|-------------|--------|
-| Backend | Firebase Cloud Functions (Python 2nd Gen) | **Fertig (POC)** |
-| Datenbank | Cloud Firestore | **Fertig (POC)** |
-| KI-Service | Gemini API mit Search Grounding | **Fertig (POC)** |
-| Frontend | Expo (React Native) + TypeScript | **In Arbeit** |
-| **SDK-Strategie**| **Standard Firebase JS SDK** (Web+Mobile identisch) | |
-| **View-Modi** | **Dual View** (Map + Bubbles switchable) | |
-| **Design** | **Neon Nights** (Dark Mode) & **Clean Pastel** (Light Mode) | |
-| **Dev-Modus** | **Mock-First** (UI gegen Mock-Daten entwickeln) | |
+#### [MODIFY] [main.py](file:///home/mark/projects/poppin/functions/main.py)
 
-| **POC-Fokus** | **Nur Braunschweig (Hardcoded/Config)** | **Aktiv** |
+Update `get_events_v1` to:
+1. Accept `city` parameter (or resolve it from lat/lng via GeoNames).
+2. Check if events exist for that city.
+3. If **no events found**: Synchronously call `fetch_events_via_gemini()` and `process_and_save_events()`.
+4. Return the newly fetched (or existing) events to the caller.
 
----
-
-## Firestore-Schema
-
+```diff
+@https_fn.on_request()
+def get_events_v1(req: https_fn.Request) -> https_fn.Response:
+    city = req.args.get("city", "Braunschweig")  # Default for POC
+    
+    # Check for existing events
+    events_ref = get_db().collection("events").where("city", "==", city)
+    docs = list(events_ref.stream())
+    
+    if not docs:
+        # No events found -> trigger discovery
+        raw_response = fetch_events_via_gemini(city)
+        process_and_save_events(city, raw_response)
+        # Re-fetch after saving
+        docs = list(events_ref.stream())
+    
+    events = [doc.to_dict() for doc in docs]
+    return https_fn.Response(json.dumps(events, default=str), mimetype="application/json")
 ```
-/events/{eventId}
-├── title, description, category, startTime, endTime?
-├── location: GeoPoint, address, city
-├── sourceUrl, createdAt, fetchedAt, hash
-
-/cities/{cityId}
-├── name: string              # "Braunschweig"
-├── location: GeoPoint        # Stadtzentrum
-├── radiusKm: number          # Suchradius
-├── population: number        # Für Snapping-Score
-├── geonameId: number         # GeoNames-Referenz
-├── lastFetchedAt: timestamp
-└── status: string            # "active" | "pending" | "disabled"
-```
 
 ---
 
-## City-Discovery (Inkrementell)
+### [Component] [Frontend - Services]
 
-> [!IMPORTANT]
-> Städte werden **on-demand** beim ersten Request aus der Region hinzugefügt.
+#### [MODIFY] [FirebaseEventService.ts](file:///home/mark/projects/poppin/app/services/FirebaseEventService.ts)
 
-### Ablauf bei neuer Anfrage
-
-1. **Bekannte Städte suchen** (Firestore `/cities`).
-2. **Gefunden?** Snapping + Events zurückgeben.
-3. **Keine Stadt?** GeoNames API abfragen (`findNearbyPlaceNameJSON`).
-4. **Neue Stadt anlegen** in `/cities` mit `status="pending"`.
-5. **Gemini Trigger:** Events holen & Stadt aktivieren.
-
-### GeoNames-Integration
-
-- **API:** `http://api.geonames.org/findNearbyPlaceNameJSON`
-- **Filter:** `cities15000` (Städte > 15k Einwohner)
+Update to:
+1. Accept a `city` parameter.
+2. If Firestore returns **zero results**, call the Cloud Functions API endpoint to trigger discovery.
+3. Return the newly fetched events.
 
 ---
 
-## Cloud Functions (Python 2nd Gen)
+## Verification Plan
 
-| Funktion | Trigger |
-|----------|---------|
-| `get_events` | HTTPS GET | API mit Discovery + Snapping |
-| `fetch_events_for_city` | Pub/Sub | Gemini-Query pro Stadt |
-| `scheduled_trigger` | Scheduler | Pro Stadt, 6h versetzt |
-| `cleanup_old_events` | Scheduler | Täglich |
-
----
-
-## Entscheidungen (Status Quo)
-
-- **Sprache:** Python (für Backend Cloud Functions).
-- **POC-Stadt:** ✅ Braunschweig.
-- **City-Discovery:** Inkrementell aktiv.
-- **Intervall:** 6h.
+### Manual Verification
+1. Clear Firestore events for a test city (e.g., "Wolfsburg").
+2. Request events for "Wolfsburg" in the app.
+3. Verify that:
+   - The backend fetches events via Gemini.
+   - Events are saved to Firestore.
+   - The UI displays the new events.

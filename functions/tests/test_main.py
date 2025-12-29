@@ -60,13 +60,19 @@ def test_get_events_v1_success(mock_db):
     assert data[0]["title"] == "Basketball"
     assert data[1]["title"] == "Jazz Night"
 
-def test_get_events_v1_missing_params():
-    """Test error handling for missing coordinates."""
+def test_get_events_v1_missing_params(mock_db):
+    """Test behavior when coordinates are missing (should default to Braunschweig)."""
     req = MagicMock()
     req.args = {} # Empty args
     
+    # Setup mock Firestore response for default city "Braunschweig"
+    mock_collection = mock_db.return_value.collection.return_value
+    mock_query = mock_collection.where.return_value
+    mock_query.stream.return_value = [] # Empty results
+    
     response = main.get_events_v1(req)
-    assert response.status == "400 BAD REQUEST" # Werkzeug/Flask response status
+    assert response.status_code == 200
+    assert "Access-Control-Allow-Origin" in response.headers
 
 def test_process_and_save_events_parsing(mock_db):
     """Test JSON parsing and Firestore saving logic."""

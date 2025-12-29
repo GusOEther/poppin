@@ -80,28 +80,44 @@ def fetch_events_via_gemini(city_name):
 def get_events_v1(req: https_fn.Request) -> https_fn.Response:
     """
     API Endpoint: Returns events for a location. 
-    Triggers discovery if city is unknown.
+    Triggers discovery if city has no events.
     """
+    # Accept city directly or fall back to lat/lng lookup
+    city = req.args.get("city")
     lat = req.args.get("lat")
     lng = req.args.get("lng")
     
-    if not lat or not lng:
-        return https_fn.Response("Missing lat/lng", status=400)
-
-    # Sort in memory to avoid missing index errors for POC
-    events_ref = get_db().collection("events").where("city", "==", "Braunschweig")
-    docs = events_ref.stream()
+    # If no city provided, try to resolve from coordinates via GeoNames
+    if not city:
+        if lat and lng:
+            nearby = find_nearby_cities(float(lat), float(lng), radius_km=30)
+            if nearby:
+                city = nearby[0].get("name", "Braunschweig")
+            else:
+                city = "Braunschweig"  # Default fallback
+        else:
+            city = "Braunschweig"  # Default for POC
     
-    events = []
-    for doc in docs:
-        events.append(doc.to_dict())
-        
-    # Sort events by startTime (handling potential missing keys)
+    # Query for existing events
+    events_ref = get_db().collection("events").where("city", "==", city)
+    docs = list(events_ref.stream())
+    
+    # AUTO-DISCOVERY: If no events found, trigger Gemini fetch
+    if not docs:
+        print(f"Auto-Discovery: No events for '{city}'. Fetching via Gemini...")
+        raw_response = fetch_events_via_gemini(city)
+        count = process_and_save_events(city, raw_response)
+        print(f"Auto-Discovery: Saved {count} events for '{city}'.")
+        # Re-fetch after saving
+        docs = list(events_ref.stream())
+    
+    events = [doc.to_dict() for doc in docs]
     events.sort(key=lambda x: str(x.get("startTime", "0")))
         
     return https_fn.Response(
         json.dumps(events, default=str),
-        mimetype="application/json"
+        mimetype="application/json",
+        headers={"Access-Control-Allow-Origin": "*"}  # CORS for frontend
     )
 
 def process_and_save_events(city_name, raw_response):

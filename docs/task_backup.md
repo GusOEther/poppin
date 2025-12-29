@@ -1,31 +1,44 @@
 # Task: Poppin Project
 
-- [x] Analyze current project state <!-- id: 0 -->
-- [x] Recover detailed implementation plan from previous session <!-- id: 11 -->
-- [x] Create persistent backup of plan and tasks in WSL <!-- id: 23 -->
-- [x] Backend Setup (Python 2nd Gen) <!-- id: 12 -->
-    - [x] Setup Firebase Project & Blaze Plan verification <!-- id: 13 -->
-    - [x] Initialize Python Cloud Functions environment <!-- id: 14 -->
-    - [x] Configure Firestore with `/cities` and `/events` skeletons <!-- id: 15 -->
-    - [x] Implement Unit Tests (pytest) <!-- id: 24 -->
-- [x] Core Logic Implementation <!-- id: 16 -->
-    - [x] Implement GeoNames Discovery (findNearby_cities) <!-- id: 17 -->
-    - [x] Implement Gemini Fetch (Search Grounding) for Braunschweig <!-- id: 18 -->
-    - [x] Implement City-Snapping algorithm <!-- id: 19 -->
-- [x] Verification <!-- id: 20 -->
-    - [x] Test Braunschweig fetch manually <!-- id: 21 -->
-    - [x] Verify Firestore population <!-- id: 22 -->
+- [x] Analyze current project state
+- [x] Recover detailed implementation plan from previous session
+- [x] Create persistent backup of plan and tasks in WSL
+- [x] Backend Setup (Python 2nd Gen)
+    - [x] Setup Firebase Project & Blaze Plan verification
+    - [x] Initialize Python Cloud Functions environment
+    - [x] Configure Firestore with `/cities` and `/events` skeletons
+    - [x] Implement Unit Tests (pytest verified ✓)
+- [x] Core Logic Implementation
+    - [x] Implement GeoNames Discovery (findNearby_cities)
+    - [x] Implement Gemini Fetch (Search Grounding) for Braunschweig
+    - [x] Implement City-Snapping algorithm
+- [x] Verification
+    - [x] Test Braunschweig fetch manually
+    - [x] Verify Firestore population
 
-- [x] Frontend Development (Expo / React Native) <!-- id: 25 -->
-    - [x] Initialize Expo Project (TypeScript, Blank Template) <!-- id: 26 -->
-    - [x] Setup Architecture (Services/API Layer) <!-- id: 30 -->
-        - [x] Create `EventService` Interface <!-- id: 31 -->
-        - [x] Implement `MockEventService` (UI Dev) <!-- id: 32 -->
-        - [ ] Implement `FirebaseEventService` (Prod) <!-- id: 33 -->
-    - [/] Implement UI (Mock-Mode) <!-- id: 28 -->
-        - [x] Map View Component <!-- id: 34 -->
-        - [x] Design Bubble View (Neon Nights Selected) <!-- id: 38 -->
-        - [ ] Bubble View Component (The "Poppin" Style) <!-- id: 36 -->
-        - [ ] View Switcher (Toggle between Map/Bubbles) <!-- id: 37 -->
-        - [ ] Event Detail Modal <!-- id: 35 -->
-    - [ ] Integrate Real Backend <!-- id: 29 -->
+- [x] Frontend Development (Expo / React Native)
+    - [x] Initialize Expo Project (TypeScript, Blank Template)
+    - [x] Setup Architecture (Services/API Layer)
+        - [x] Create `EventService` Interface
+        - [x] Implement `MockEventService` (UI Dev)
+        - [ ] Implement `FirebaseEventService` (Prod)
+    - [x] Implement UI (Mock-Mode)
+        - [x] Map View Component
+        - [x] Design Bubble View (Neon Nights Selected)
+        - [x] Bubble View Component (The "Poppin" Style)
+        - [x] View Switcher (Toggle between Map/Bubbles)
+        - [ ] Event Detail Modal
+    - [x] Integrate Real Backend
+        - [x] Implement `FirebaseEventService` (Prod)
+        - [x] Switch UI to use `FirebaseEventService`
+    - [x] Final Polish
+        - [x] Event Detail Modal
+        - [x] Smooth transitions between Map/Bubbles
+        - [x] Web compatibility placeholder (MapScreen.web.tsx)
+
+- [x] Auto-Discovery Flow
+    - [x] Update `get_events_v1` to trigger Gemini fetch if no events exist
+    - [x] Update `FirebaseEventService` to call Cloud Function if Firestore is empty
+    - [x] Deploy and test (Full backend sync verified ✓)
+
+> **Note:** Update backups in `docs/` folder periodically!
