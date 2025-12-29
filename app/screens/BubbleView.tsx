@@ -16,30 +16,131 @@ const BUBBLE_CONFIGS = [
     { colors: ['#FF5F6D', '#FFC371'], shadow: '#FF5F6D' },
 ];
 
-const Bubble = ({ event, config, onPress }: { event: Event, config: any, onPress: (event: Event) => void }) => {
+
+
+
+// Helper function to generate balanced bubble positions in a staggered layout
+const generateBubblePositions = (events: Event[], screenWidth: number, screenHeight: number) => {
+    const bubbles: {
+        event: Event | null;
+        x: number;
+        y: number;
+        size: number;
+        isPlaceholder: boolean;
+        config: any
+    }[] = [];
+
+    // Start BELOW the header/title area
+    const startY = 180; // Moved up slightly to use more space
+    const endY = screenHeight - 110;
+    const availableHeight = endY - startY;
+
+    // Fixed row height
+    const rowHeight = 120; // Slightly tighter packing
+    const numRows = Math.floor(availableHeight / rowHeight);
+
+    let eventIndex = 0;
+
+    for (let row = 0; row < numRows; row++) {
+        const isStaggered = row % 2 === 1;
+        const colsInRow = isStaggered ? 2 : 3;
+        const cellWidth = screenWidth / (colsInRow + (isStaggered ? 1 : 0));
+        const rowOffset = isStaggered ? cellWidth : cellWidth / 2;
+
+        for (let col = 0; col < colsInRow; col++) {
+            // Determine if this specific slot should be a placeholder
+            // We want to intersperse them, but prioritize showing all events
+            const remainingEvents = events.length - eventIndex;
+
+            // Logic:
+            // 1. If we have no events left, it MUST be a placeholder
+            // 2. If we have plenty of events, we can afford to skip a slot occasionally for aesthetics
+            // 3. We use a predictable pattern to create "gaps" (placeholders)
+
+            const isPatternPlaceholder = (row * 3 + col) % 5 === 3; // Every 5th bubbles is a placeholder effectively
+
+            // Should this be an event?
+            // Yes, if we have events, UNLESS it's a pattern placeholder AND we have enough slots left for the remaining events
+            const slotsRemaining = (numRows * 2.5) - (bubbles.length + 1); // rough estimate
+            const canSkip = remainingEvents < slotsRemaining;
+
+            const isEventSlot = remainingEvents > 0 && (!isPatternPlaceholder || !canSkip);
+
+            const isPlaceholder = !isEventSlot;
+
+            // Base position
+            let x = rowOffset + col * cellWidth;
+            let y = startY + row * rowHeight + rowHeight / 2;
+
+            // Controlled jitter - more organic
+            x += (Math.random() - 0.5) * cellWidth * 0.4;
+            y += (Math.random() - 0.5) * rowHeight * 0.4;
+
+            // Size
+            const size = isPlaceholder
+                ? 50 + Math.random() * 40 // Placeholders: 50-90
+                : 95 + Math.random() * 35; // Events: 95-130
+
+            // Configuration for colors
+            const configIndex = (row * 3 + col) % BUBBLE_CONFIGS.length;
+            const config = BUBBLE_CONFIGS[configIndex];
+
+            if (isEventSlot) {
+                bubbles.push({
+                    event: events[eventIndex],
+                    x,
+                    y,
+                    size,
+                    isPlaceholder: false,
+                    config
+                });
+                eventIndex++;
+            } else {
+                bubbles.push({
+                    event: null,
+                    x,
+                    y,
+                    size,
+                    isPlaceholder: true,
+                    config
+                });
+            }
+        }
+    }
+
+    return bubbles;
+};
+
+const Bubble = ({ item, onPress }: {
+    item: { event: Event | null; x: number; y: number; size: number; isPlaceholder: boolean; config: any },
+    onPress: ((event: Event) => void) | null
+}) => {
     const scale = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.spring(scale, {
             toValue: 1,
-            tension: 15,
-            friction: 6,
+            tension: 20,
+            friction: 7,
             useNativeDriver: true,
-            delay: Math.random() * 800,
+            delay: Math.random() * 500,
         }).start();
+
+        const floatDuration = 3000 + Math.random() * 2000;
+        const floatDistance = 15 + Math.random() * 15;
 
         const floatAnimation = Animated.loop(
             Animated.sequence([
                 Animated.timing(translateY, {
-                    toValue: -20,
-                    duration: 2500 + Math.random() * 1500,
+                    toValue: -floatDistance,
+                    duration: floatDuration,
                     easing: Easing.inOut(Easing.sin),
                     useNativeDriver: true,
                 }),
                 Animated.timing(translateY, {
                     toValue: 0,
-                    duration: 2500 + Math.random() * 1500,
+                    duration: floatDuration,
                     easing: Easing.inOut(Easing.sin),
                     useNativeDriver: true,
                 }),
@@ -48,30 +149,29 @@ const Bubble = ({ event, config, onPress }: { event: Event, config: any, onPress
         floatAnimation.start();
     }, []);
 
-    const left = useRef(Math.random() * (width - 140) + 10).current;
-    const top = useRef(Math.random() * (height - 400) + 150).current;
-    const size = useRef(100 + Math.random() * 60).current;
+    const { isPlaceholder, size, config, event, x, y } = item;
 
     return (
         <Animated.View
             style={[
                 styles.bubbleContainer,
                 {
-                    left,
-                    top,
+                    left: x - size / 2,
+                    top: y - size / 2,
                     transform: [{ scale }, { translateY }],
                 },
             ]}
         >
             <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={() => onPress(event)}
+                activeOpacity={isPlaceholder ? 1 : 0.8}
+                onPress={isPlaceholder ? undefined : () => onPress?.(event!)}
                 style={[
                     styles.outerRing,
                     {
-                        width: size + 24,
-                        height: size + 24,
-                        borderRadius: (size + 24) / 2,
+                        width: size + 20,
+                        height: size + 20,
+                        borderRadius: (size + 20) / 2,
+                        opacity: isPlaceholder ? 0.3 : 1,
                     }
                 ]}
             >
@@ -89,9 +189,11 @@ const Bubble = ({ event, config, onPress }: { event: Event, config: any, onPress
                         },
                     ]}
                 >
-                    <Text style={styles.bubbleText} numberOfLines={2}>
-                        {event.title}
-                    </Text>
+                    {!isPlaceholder && event && (
+                        <Text style={styles.bubbleText} numberOfLines={2}>
+                            {event.title}
+                        </Text>
+                    )}
                 </LinearGradient>
             </TouchableOpacity>
         </Animated.View>
@@ -100,6 +202,7 @@ const Bubble = ({ event, config, onPress }: { event: Event, config: any, onPress
 
 export default function BubbleView() {
     const [events, setEvents] = useState<Event[]>([]);
+    const [bubbleItems, setBubbleItems] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const eventService = new FirebaseEventService();
@@ -114,12 +217,17 @@ export default function BubbleView() {
             longitude: 10.526770
         });
         setEvents(data);
+
+        // Generate full layout mapping
+        const items = generateBubblePositions(data, width, height);
+        setBubbleItems(items);
     };
 
     const handlePress = (event: Event) => {
         setSelectedEvent(event);
         setModalVisible(true);
     };
+
 
     return (
         <View style={styles.container}>
@@ -128,25 +236,25 @@ export default function BubbleView() {
                 style={StyleSheet.absoluteFill}
             />
 
+            {/* Background Bubbles layer - first in tree means bottom of stack */}
+            <View style={styles.content}>
+                {bubbleItems.map((item, index) => (
+                    <Bubble
+                        key={index}
+                        item={item}
+                        onPress={handlePress}
+                    />
+                ))}
+            </View>
+
             <View style={styles.header}>
                 <Ionicons name="arrow-back" size={24} color="#FFF" />
                 <Ionicons name="search" size={24} color="#FFF" />
             </View>
 
-            <View style={styles.titleContainer}>
+            <View style={styles.titleContainer} pointerEvents="none">
                 <Text style={styles.headerTitle}>What's</Text>
-                <Text style={styles.headerTitle}>poppin'</Text>
-            </View>
-
-            <View style={styles.content}>
-                {events.map((event, index) => (
-                    <Bubble
-                        key={event.id}
-                        event={event}
-                        config={BUBBLE_CONFIGS[index % BUBBLE_CONFIGS.length]}
-                        onPress={handlePress}
-                    />
-                ))}
+                <Text style={styles.headerTitle}>poppin'!</Text>
             </View>
 
             <EventDetailModal
@@ -180,8 +288,7 @@ const styles = StyleSheet.create({
         lineHeight: 52,
     },
     content: {
-        flex: 1,
-        position: 'relative',
+        ...StyleSheet.absoluteFillObject,
     },
     bubbleContainer: {
         position: 'absolute',
