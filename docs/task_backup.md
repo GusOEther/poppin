@@ -21,13 +21,13 @@
     - [x] Setup Architecture (Services/API Layer)
         - [x] Create `EventService` Interface
         - [x] Implement `MockEventService` (UI Dev)
-        - [ ] Implement `FirebaseEventService` (Prod)
+        - [x] Implement `FirebaseEventService` (Prod)
     - [x] Implement UI (Mock-Mode)
         - [x] Map View Component
         - [x] Design Bubble View (Neon Nights Selected)
         - [x] Bubble View Component (The "Poppin" Style)
         - [x] View Switcher (Toggle between Map/Bubbles)
-        - [ ] Event Detail Modal
+        - [x] Event Detail Modal
     - [x] Integrate Real Backend
         - [x] Implement `FirebaseEventService` (Prod)
         - [x] Switch UI to use `FirebaseEventService`
@@ -47,4 +47,10 @@
     - [x] Refine `App.tsx` (Glassmorphic Tab Bar, Icons)
     - [x] Verify visual match with mockup (User confirmed ✓)
 
+- [ ] Focus: Bubble Experience & Search
+    - [ ] Implement manual City Search (to trigger auto-discovery for any location)
+    - [ ] Optimize Bubble animations (physics/interactions)
+    - [ ] Refine Web-Mobile parity for Bubbles (interactions) 
+
+> **Note:** Map View features are deprioritized.
 > **Note:** Update backups in `docs/` folder periodically!

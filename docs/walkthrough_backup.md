@@ -24,6 +24,6 @@ The app now runs both on mobile (Expo Go) and in the browser.
 - **Live Preview**: Verified on both mobile (Expo Go) and web (Tunnel URL).
 
 ## Next Steps
-- Real-time location snapping for users.
-- Improved error handling for AI-fetching edge cases.
-- Production-ready styling for the web map placeholder.
+- **Focus**: City Search & Discovery (Manual entry trigger).
+- **Optimization**: Refining bubble physics and interactions.
+- **Maintenance**: Keeping dependencies updated and verifying AI-search reliability.

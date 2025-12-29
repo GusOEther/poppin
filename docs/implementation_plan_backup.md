@@ -54,25 +54,25 @@ Update to:
 
 ---
 
-## Proposed UI Refinement (Neon Nights)
+## Implemented UI Refinement (Neon Nights)
 
 ### [Component] [Frontend - Dependencies]
-- [NEW] Install `expo-linear-gradient` for bubble gradients.
-- [NEW] Ensure `@expo/vector-icons` is available for the tab bar.
+- [INSTALLED] `expo-linear-gradient` for bubble gradients.
+- [INSTALLED] `expo-blur` for tab bar glass effect.
 
 ### [Component] [Frontend - BubbleView.tsx]
-- [MODIFY] Update header: Bold "What's poppin'", add search icon.
-- [MODIFY] Update Bubble:
-  - Add `LinearGradient` background.
-  - Add semi-transparent frosted glass border (outer ring).
-  - Use bolder typography.
-- [MODIFY] Background: Add deep dark gradient.
+- [COMPLETED] Updated header: Bold "What's poppin'", added search icon.
+- [COMPLETED] Updated Bubble:
+  - Added `LinearGradient` background.
+  - Added semi-transparent frosted glass border (outer ring).
+  - Used bolder typography.
+- [COMPLETED] Background: Added deep dark gradient.
 
 ### [Component] [Frontend - App.tsx]
-- [MODIFY] Update Tab Bar:
-  - Implement frosted glass effect (blur/semi-transparency).
-  - Use icons instead of text.
-  - Add active state glow.
+- [COMPLETED] Updated Tab Bar:
+  - Implemented `BlurView` (frosted glass/semi-transparency).
+  - Used Ionicon icons.
+  - Added active state glow.
 
 ## Verification Plan
 
