@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text, SafeAreaView, Dimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
+// import { BlurView } from 'expo-blur'; // Temporarily disabled for debugging
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import MapScreen from './screens/MapScreen';
@@ -20,7 +20,7 @@ export default function App() {
       case 'map':
         return <MapScreen />;
       default:
-        return <BubbleView />; // Placeholder for other tabs
+        return <BubbleView />;
     }
   };
 
@@ -30,7 +30,8 @@ export default function App() {
 
       {renderContent()}
 
-      <BlurView intensity={80} tint="dark" style={styles.tabBar}>
+      {/* Replaced BlurView with View for Android compatibility */}
+      <View style={styles.tabBar}>
         <TouchableOpacity
           onPress={() => setActiveTab('bubble')}
           style={styles.tabButton}
@@ -76,7 +77,7 @@ export default function App() {
             color="rgba(255,255,255,0.4)"
           />
         </TouchableOpacity>
-      </BlurView>
+      </View>
     </View>
   );
 }
@@ -101,6 +102,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(20, 20, 30, 0.9)', // Added for non-blur fallback
   },
   tabButton: {
     padding: 10,
