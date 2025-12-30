@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { IEventService } from './EventService';
 import { Event, GeoPoint } from '../types';
@@ -14,6 +14,40 @@ export class FirebaseEventService implements IEventService {
 
     setCity(city: string) {
         this.city = city;
+    }
+
+    private lastFetchTrigger: Map<string, number> = new Map();
+
+    // Live Subscription (SWR)
+    subscribeToEvents(location: GeoPoint, onUpdate: (events: Event[]) => void): () => void {
+        console.log(`FirebaseEventService: Subscribing to events for ${this.city}`);
+
+        // Trigger the "Stale Check" / Auto-Discovery via HTTP if needed
+        // Debounce: Only trigger if we haven't checked for this city in the last 5 seconds
+        const now = Date.now();
+        const lastTrigger = this.lastFetchTrigger.get(this.city) || 0;
+
+        if (now - lastTrigger > 5000) {
+            console.log(`FirebaseEventService: Triggering staleness check for ${this.city}`);
+            this.fetchFromCloudFunction().catch(err => console.error("SWR Trigger failed", err));
+            this.lastFetchTrigger.set(this.city, now);
+        } else {
+            console.log(`FirebaseEventService: Staleness check debounced for ${this.city}`);
+        }
+
+        const eventsRef = collection(db, 'events');
+        const q = query(
+            eventsRef,
+            where('city', '==', this.city)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const events = this.parseEvents(snapshot);
+            console.log(`FirebaseEventService: Realtime update - ${events.length} events`);
+            onUpdate(events);
+        });
+
+        return unsubscribe;
     }
 
     async getEvents(location: GeoPoint, radiusKm: number = 10): Promise<Event[]> {
@@ -32,6 +66,7 @@ export class FirebaseEventService implements IEventService {
             // AUTO-DISCOVERY: If no events in Firestore, call Cloud Function to trigger fetch
             if (querySnapshot.empty) {
                 console.log(`No events for ${this.city} in Firestore. Triggering auto-discovery...`);
+                // If direct fetch is needed without subscription
                 const events = await this.fetchFromCloudFunction();
                 return events;
             }

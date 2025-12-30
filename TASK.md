@@ -47,12 +47,19 @@
     - [x] Refine `App.tsx` (Glassmorphic Tab Bar, Icons)
     - [x] Verify visual match with mockup (User confirmed ✓)
 
-- [ ] Focus: Bubble Experience & Search
     - [x] Integrate `react-native-reanimated` & `gesture-handler` (User implemented ✓)
     - [x] Implement interactive Bubble Physics (User implemented ✓)
-    - [ ] Verify Bubble interactions on device
-    - [ ] Implement manual City Search (to trigger auto-discovery for any location)
-    - [ ] Refine Web-Mobile parity for Bubbles (interactions) 
+    - [x] Implement manual City Search (to trigger auto-discovery for any location)
+    - [x] Refine Web-Mobile parity for Bubbles (interactions) 
+
+- [x] Live Updates & Caching (SWR)
+    - [x] Backend: Check for staleness (>24h) in `get_events_v1`
+    - [x] Backend: Trigger background refresh via Pub/Sub (optimized)
+    - [x] Backend: Implement Unit Tests for Staleness & Publisher
+    - [x] Frontend: Implement `onSnapshot` for real-time updates
+    - [x] UX: Auto-refresh/reset logic when new data arrives
+    - [x] Performance: API Debouncing in Frontend
+    - [x] Deployment: Successfully deployed to Firebase
 
 > **Note:** Map View features are deprioritized.
 > **Note:** Update backups in `docs/` folder periodically!

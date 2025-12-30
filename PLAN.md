@@ -41,6 +41,16 @@ def get_events_v1(req: https_fn.Request) -> https_fn.Response:
     return https_fn.Response(json.dumps(events, default=str), mimetype="application/json")
 ```
 
+### [Backend] Caching Strategy: Stale-While-Revalidate (SWR)
+To ensure fast load times while keeping data fresh:
+1.  **Fast Read**: If events exist in DB, return them **immediately**, regardless of age.
+2.  **Stale Check**: If `fetchedAt` is older than 24h, trigger a background update (via Pub/Sub).
+    - **Optimization**: Lazy initialization of `PublisherClient` to avoid credentials errors during Firebase deployment.
+    - **Optimization**: Programmatic topic creation with a global flag check to minimize overhead.
+3.  **Live Update**: The frontend subscribes to Firestore updates (`onSnapshot`) and auto-refreshes when the background worker finishes.
+    - **UX**: Modal remains open during background updates to maintain user context.
+    - **Performance**: Added a 5-second debounce in `FirebaseEventService` to prevent redundant background refresh triggers.
+
 ---
 
 ### [Component] [Frontend - Services]
