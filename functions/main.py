@@ -92,7 +92,8 @@ def fetch_events_via_gemini(city_name):
     client = genai.Client(api_key=GEMINI_API_KEY)
     
     prompt = f"""
-    Find upcoming events in {city_name} for the next 7 days.
+    Find as many upcoming events as possible in {city_name} for the next 7 days.
+    Aim for at least 30 events if available.
     Include: Title, Date, Location, Category, and a short Description.
     Return the result ONLY as a JSON list of objects.
     Keys: 'title', 'description', 'category', 'startTime', 'address'.
@@ -155,12 +156,14 @@ def get_events_v1(req: https_fn.Request) -> https_fn.Response:
     events = [doc.to_dict() for doc in docs]
     
     # SWR Strategy:
-    # 1. No Data -> Synchronous Fetch (Wait)
+    # 1. No Data OR Force Refresh -> Synchronous Fetch (Wait)
     # 2. Data Exists but Stale -> Background Fetch (Trigger PubSub) + Return Stale Data
     # 3. Data Fresh -> Return Data
     
-    if not docs:
-        print(f"SWR: No events for '{city}'. Synchronous Fetch...")
+    force_refresh = req.args.get("force") == "true"
+    
+    if not docs or force_refresh:
+        print(f"SWR: Fetching fresh events for '{city}' (Force: {force_refresh})...")
         raw_response = fetch_events_via_gemini(city)
         count = process_and_save_events(city, raw_response)
         print(f"SWR: Saved {count} events via sync fetch.")

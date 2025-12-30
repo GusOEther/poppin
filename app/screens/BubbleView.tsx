@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, View, Text, Dimensions, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Dimensions, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { FirebaseEventService } from '../services/FirebaseEventService';
@@ -41,35 +41,40 @@ const generateBubblePositions = (events: Event[], screenWidth: number, screenHei
     }[] = [];
 
     const startY = 180;
-    const endY = screenHeight - 110;
-    const availableHeight = endY - startY;
-    const rowHeight = 120;
-    const numRows = Math.floor(availableHeight / rowHeight);
+    const rowHeight = 110;
+    const paddingHorizontal = 40;
+    const contentWidth = screenWidth - paddingHorizontal * 2;
+
+    // Determine how many rows we need. We want to fit at least all events + some placeholders.
+    const eventsPerRow = 2.5; // Average
+    const neededRows = Math.max(7, Math.ceil(events.length / 1.5)); // More rows than strictly needed for spacing
+
     let eventIndex = 0;
 
-    for (let row = 0; row < numRows; row++) {
+    for (let row = 0; row < neededRows; row++) {
         const isStaggered = row % 2 === 1;
         const colsInRow = isStaggered ? 2 : 3;
-        const cellWidth = screenWidth / (colsInRow + (isStaggered ? 1 : 0));
-        const rowOffset = isStaggered ? cellWidth : cellWidth / 2;
+        const cellWidth = contentWidth / (colsInRow);
+        const rowXOffset = paddingHorizontal + (isStaggered ? cellWidth / 2 : 0);
 
         for (let col = 0; col < colsInRow; col++) {
             const remainingEvents = events.length - eventIndex;
-            const isPatternPlaceholder = (row * 3 + col) % 5 === 3;
-            const slotsRemaining = (numRows * 2.5) - (bubbles.length + 1);
-            const canSkip = remainingEvents < slotsRemaining;
-            const isEventSlot = remainingEvents > 0 && (!isPatternPlaceholder || !canSkip);
+
+            // Randomly decide if this slot is an event or placeholder
+            // Higher chance for event if we have many left
+            const isEventSlot = remainingEvents > 0 && (Math.random() > 0.3 || remainingEvents > (neededRows - row) * 2);
             const isPlaceholder = !isEventSlot;
 
-            let x = rowOffset + col * cellWidth;
+            let x = rowXOffset + col * cellWidth;
             let y = startY + row * rowHeight + rowHeight / 2;
 
-            x += (Math.random() - 0.5) * cellWidth * 0.4;
-            y += (Math.random() - 0.5) * rowHeight * 0.4;
+            // Add some jitter
+            x += (Math.random() - 0.5) * cellWidth * 0.3;
+            y += (Math.random() - 0.5) * rowHeight * 0.3;
 
             const size = isPlaceholder
-                ? 50 + Math.random() * 40
-                : 95 + Math.random() * 35;
+                ? 40 + Math.random() * 30
+                : 90 + Math.random() * 30;
 
             const configIndex = (row * 3 + col) % BUBBLE_CONFIGS.length;
             const config = BUBBLE_CONFIGS[configIndex];
@@ -461,6 +466,10 @@ export default function BubbleView() {
         setModalVisible(true);
     };
 
+    const contentHeight = bubbleItems.length > 0
+        ? Math.max(height, Math.max(...bubbleItems.map(i => i.y + i.size))) + 150
+        : height;
+
     return (
         <GestureHandlerRootView style={styles.container}>
             <LinearGradient
@@ -468,7 +477,12 @@ export default function BubbleView() {
                 style={StyleSheet.absoluteFill}
             />
 
-            <View style={styles.content}>
+            <ScrollView
+                style={styles.content}
+                contentContainerStyle={{ height: contentHeight }}
+                showsVerticalScrollIndicator={false}
+                decelerationRate="normal"
+            >
                 {bubbleItems.length > 0 ? (
                     <BubbleList key={currentCity} items={bubbleItems} onPress={handlePress} />
                 ) : (
@@ -479,7 +493,7 @@ export default function BubbleView() {
                         </View>
                     )
                 )}
-            </View>
+            </ScrollView>
 
             <View style={styles.titleContainer} pointerEvents="none">
                 <Text style={styles.headerTitle}>{loading ? 'Poppin\'' : 'What\'s'}</Text>
