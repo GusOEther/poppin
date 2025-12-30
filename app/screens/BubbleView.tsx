@@ -349,7 +349,10 @@ export default function BubbleView() {
 
     // Filter logic
     useEffect(() => {
-        if (events.length === 0) return;
+        if (events.length === 0) {
+            setBubbleItems([]);
+            return;
+        }
 
         let filtered = events;
 
@@ -407,6 +410,8 @@ export default function BubbleView() {
     }, [events, filterDate, filterCategory]);
 
     useEffect(() => {
+        // Clear previous state immediately to avoid showing stale data from previous city
+        setEvents([]);
         setLoading(true);
         let initialLoad = true;
 
