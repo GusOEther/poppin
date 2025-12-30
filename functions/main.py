@@ -15,7 +15,7 @@ def get_db():
 
 # --- Config ---
 GEONAMES_USER = os.environ.get("GEONAMES_USER", "poppin") 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyCLCvGeRubQopZe7wl-mU8oV_cOOxyGqK0")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") # Set this in your .env file
 
 def find_nearby_cities(lat, lng, radius_km=50):
     """
@@ -104,7 +104,7 @@ def get_events_v1(req: https_fn.Request) -> https_fn.Response:
     
     # AUTO-DISCOVERY: If no events found, trigger Gemini fetch
     if not docs:
-        print(f"Auto-Discovery: No events for '{city}'. Fetching via Gemini...")
+        print(f"Auto-Discovery v2: No events for '{city}'. Fetching via Gemini...")
         raw_response = fetch_events_via_gemini(city)
         count = process_and_save_events(city, raw_response)
         print(f"Auto-Discovery: Saved {count} events for '{city}'.")

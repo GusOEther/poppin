@@ -12,6 +12,10 @@ export class FirebaseEventService implements IEventService {
         this.city = city;
     }
 
+    setCity(city: string) {
+        this.city = city;
+    }
+
     async getEvents(location: GeoPoint, radiusKm: number = 10): Promise<Event[]> {
         console.log(`FirebaseEventService: Fetching events for ${this.city}`);
 

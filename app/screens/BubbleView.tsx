@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Dimensions } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, View, Text, Dimensions, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { FirebaseEventService } from '../services/FirebaseEventService';
@@ -339,13 +339,22 @@ export default function BubbleView() {
     const [bubbleItems, setBubbleItems] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
-    const eventService = new FirebaseEventService();
+    const [searchVisible, setSearchVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [currentCity, setCurrentCity] = useState('Braunschweig');
+    const eventService = useRef(new FirebaseEventService(currentCity)).current;
 
     useEffect(() => {
         loadEvents();
     }, []);
 
-    const loadEvents = async () => {
+    const loadEvents = async (city?: string) => {
+        setLoading(true);
+        if (city) {
+            eventService.setCity(city);
+            setCurrentCity(city);
+        }
         const data = await eventService.getEvents({
             latitude: 52.268875,
             longitude: 10.526770
@@ -353,6 +362,15 @@ export default function BubbleView() {
         setEvents(data);
         const items = generateBubblePositions(data, width, height);
         setBubbleItems(items);
+        setLoading(false);
+    };
+
+    const handleSearch = () => {
+        if (searchQuery.trim()) {
+            loadEvents(searchQuery.trim());
+            setSearchVisible(false);
+            setSearchQuery('');
+        }
     };
 
     const handlePress = (event: Event) => {
@@ -368,19 +386,48 @@ export default function BubbleView() {
             />
 
             <View style={styles.content}>
-                {bubbleItems.length > 0 && (
-                    <BubbleList items={bubbleItems} onPress={handlePress} />
+                {bubbleItems.length > 0 ? (
+                    <BubbleList key={currentCity} items={bubbleItems} onPress={handlePress} />
+                ) : (
+                    !loading && (
+                        <View style={styles.emptyStateContainer}>
+                            <Text style={styles.emptyStateText}>No events poppin' in</Text>
+                            <Text style={styles.emptyStateCity}>{currentCity}</Text>
+                        </View>
+                    )
                 )}
             </View>
 
-            <View style={styles.header} pointerEvents="none">
-                <Ionicons name="arrow-back" size={24} color="#FFF" />
-                <Ionicons name="search" size={24} color="#FFF" />
+            <View style={styles.titleContainer} pointerEvents="none">
+                <Text style={styles.headerTitle}>{loading ? 'Poppin\'' : 'What\'s'}</Text>
+                <Text style={styles.headerTitle}>{loading ? '...' : 'poppin\''}</Text>
+                {!loading && <Text style={styles.citySubtitle}>{currentCity}</Text>}
             </View>
 
-            <View style={styles.titleContainer} pointerEvents="none">
-                <Text style={styles.headerTitle}>What's</Text>
-                <Text style={styles.headerTitle}>poppin'!</Text>
+            {searchVisible && (
+                <View style={styles.searchBarContainer}>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search city..."
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onSubmitEditing={handleSearch}
+                        autoFocus
+                    />
+                    <TouchableOpacity onPress={handleSearch} style={styles.searchSubmitButton}>
+                        <Ionicons name="arrow-forward" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => { }}>
+                    <Ionicons name="arrow-back" size={24} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setSearchVisible(!searchVisible)}>
+                    <Ionicons name={searchVisible ? "close" : "search"} size={24} color="#FFF" />
+                </TouchableOpacity>
             </View>
 
             <EventDetailModal
@@ -452,5 +499,62 @@ const styles = StyleSheet.create({
         textShadowColor: 'rgba(0,0,0,0.3)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 3,
+    },
+    citySubtitle: {
+        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 18,
+        fontWeight: '600',
+        marginTop: 5,
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+    },
+    searchBarContainer: {
+        position: 'absolute',
+        top: 100,
+        left: 25,
+        right: 25,
+        height: 60,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderRadius: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        zIndex: 20,
+        backdropFilter: 'blur(10px)',
+    } as any,
+    searchInput: {
+        flex: 1,
+        color: '#FFF',
+        fontSize: 18,
+        fontWeight: '500',
+    },
+    searchSubmitButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyStateContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 40,
+    },
+    emptyStateText: {
+        color: 'rgba(255, 255, 255, 0.5)',
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    emptyStateCity: {
+        color: '#FFF',
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginTop: 10,
+        textTransform: 'uppercase',
     },
 });
