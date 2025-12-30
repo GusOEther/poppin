@@ -343,7 +343,68 @@ export default function BubbleView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [currentCity, setCurrentCity] = useState('Braunschweig');
+    const [filterDate, setFilterDate] = useState<'today' | 'tomorrow' | 'weekend' | 'all'>('all');
+    const [filterCategory, setFilterCategory] = useState<string | null>(null);
     const eventService = useRef(new FirebaseEventService(currentCity)).current;
+
+    // Filter logic
+    useEffect(() => {
+        if (events.length === 0) return;
+
+        let filtered = events;
+
+        // Date Filter
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const tomorrow = today + 86400000;
+        const dayAfter = tomorrow + 86400000;
+        const nextWeek = today + 7 * 86400000;
+
+        if (filterDate === 'today') {
+            filtered = filtered.filter(e => {
+                const t = new Date(e.startTime).getTime();
+                return t >= today && t < tomorrow;
+            });
+        } else if (filterDate === 'tomorrow') {
+            filtered = filtered.filter(e => {
+                const t = new Date(e.startTime).getTime();
+                return t >= tomorrow && t < dayAfter;
+            });
+        } else if (filterDate === 'weekend') {
+            // Simplified weekend logic: Friday 5pm to Sunday night
+            // For now, let's just say "next 3 days" or specific weekend logic if needed.
+            // Let's us "This Weekend" as "Fri-Sun".
+            // Finding next Friday:
+            const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+            const distToFriday = (5 + 7 - dayOfWeek) % 7;
+            const nextFriday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distToFriday);
+            nextFriday.setHours(17, 0, 0, 0); // 5 PM
+            const nextSunday = new Date(nextFriday);
+            nextSunday.setDate(nextSunday.getDate() + 2);
+            nextSunday.setHours(23, 59, 59, 999);
+
+            // If today is Sat/Sun, "This Weekend" implies today/tomorrow until Sun night.
+            const weekendStart = (dayOfWeek === 6 || dayOfWeek === 0) ? today : nextFriday.getTime();
+            const weekendEnd = nextSunday.getTime();
+
+            filtered = filtered.filter(e => {
+                const t = new Date(e.startTime).getTime();
+                return t >= weekendStart && t <= weekendEnd;
+            });
+        }
+
+        // Category Filter
+        if (filterCategory) {
+            filtered = filtered.filter(e => {
+                // Fuzzy match or exact? Let's check if category string includes our key
+                return e.category.toLowerCase().includes(filterCategory.toLowerCase());
+            });
+        }
+
+        const items = generateBubblePositions(filtered, width, height);
+        setBubbleItems(items);
+
+    }, [events, filterDate, filterCategory]);
 
     useEffect(() => {
         loadEvents();
@@ -360,8 +421,7 @@ export default function BubbleView() {
             longitude: 10.526770
         });
         setEvents(data);
-        const items = generateBubblePositions(data, width, height);
-        setBubbleItems(items);
+        // Initial bubble generation is now handled by the useEffect above
         setLoading(false);
     };
 
@@ -421,6 +481,71 @@ export default function BubbleView() {
                 </View>
             )}
 
+
+
+            {/* Filter Bar */}
+            <View style={styles.filterBarContainer}>
+                {/* Date Segments */}
+                <View style={styles.dateSegmentContainer}>
+                    <View style={styles.dateSegmentDecor} />
+                    {(['today', 'tomorrow', 'weekend'] as const).map((mode) => {
+                        const isActive = filterDate === mode;
+                        return (
+                            <TouchableOpacity
+                                key={mode}
+                                onPress={() => setFilterDate(isActive ? 'all' : mode)}
+                                style={styles.dateSegmentButton}
+                            >
+                                {isActive && (
+                                    <LinearGradient
+                                        colors={['#45CAFF', '#FF1B6B']}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                        style={StyleSheet.absoluteFill}
+                                    />
+                                )}
+                                <Text style={[
+                                    styles.dateSegmentText,
+                                    isActive && styles.dateSegmentTextActive
+                                ]}>
+                                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+
+                {/* Category Icons */}
+                <View style={styles.categoryContainer}>
+                    {[
+                        { id: 'Music', icon: 'musical-notes' },
+                        { id: 'Party', icon: 'wine' },
+                        { id: 'Art', icon: 'color-palette' },
+                    ].map((cat) => {
+                        const isActive = filterCategory === cat.id;
+                        return (
+                            <TouchableOpacity
+                                key={cat.id}
+                                onPress={() => setFilterCategory(isActive ? null : cat.id)}
+                                style={[
+                                    styles.categoryButton,
+                                    isActive && styles.categoryButtonActive
+                                ]}
+                            >
+                                <Ionicons
+                                    name={cat.icon as any}
+                                    size={20}
+                                    color={isActive ? '#FFF' : '#AAA'}
+                                />
+                                {isActive && (
+                                    <View style={styles.categoryGlow} />
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            </View>
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => { }}>
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -435,7 +560,7 @@ export default function BubbleView() {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
             />
-        </GestureHandlerRootView>
+        </GestureHandlerRootView >
     );
 }
 
@@ -557,4 +682,77 @@ const styles = StyleSheet.create({
         marginTop: 10,
         textTransform: 'uppercase',
     },
+    filterBarContainer: {
+        position: 'absolute',
+        bottom: 120, // Just above the tab bar (which is 90 + margin)
+        left: 20,
+        right: 20,
+        height: 60,
+        backgroundColor: 'rgba(20, 20, 30, 0.6)',
+        borderRadius: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(15px)', // Works on web
+        zIndex: 20,
+        justifyContent: 'space-between'
+    } as any,
+    dateSegmentContainer: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        borderRadius: 15,
+        overflow: 'hidden',
+        height: 40,
+        alignItems: 'center',
+    },
+    dateSegmentDecor: {
+        ...StyleSheet.absoluteFillObject,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 15,
+    },
+    dateSegmentButton: {
+        paddingHorizontal: 12,
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    dateSegmentText: {
+        color: '#888',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    dateSegmentTextActive: {
+        color: '#FFF',
+        fontWeight: 'bold',
+    },
+    categoryContainer: {
+        flexDirection: 'row',
+        gap: 8,
+        marginLeft: 10
+    },
+    categoryButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    categoryButtonActive: {
+        borderColor: '#45CAFF',
+        shadowColor: '#45CAFF',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 8,
+    },
+    categoryGlow: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 20,
+        backgroundColor: 'rgba(69, 202, 255, 0.1)',
+    }
 });
