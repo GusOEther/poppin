@@ -16,7 +16,10 @@ export const db = getFirestore(app);
 
 // Switch between Emulator and Production
 const USE_EMULATOR = process.env.EXPO_PUBLIC_USE_EMULATOR !== 'false';
-const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_HOST || 'localhost';
+// Try to detect host automatically for web, fallback to env or localhost
+const EMULATOR_HOST = (typeof window !== 'undefined' && window?.location?.hostname)
+    ? window.location.hostname
+    : (process.env.EXPO_PUBLIC_FIREBASE_HOST || 'localhost');
 
 if (USE_EMULATOR) {
     console.log(`[Firebase] Connecting to Firestore Emulator at ${EMULATOR_HOST}`);

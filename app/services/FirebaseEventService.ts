@@ -6,7 +6,9 @@ import { Event, GeoPoint } from '../types';
 // Backend API URL
 // Default to Emulator (localhost) unless specified otherwise
 const USE_EMULATOR = process.env.EXPO_PUBLIC_USE_EMULATOR !== 'false';
-const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_HOST || 'localhost';
+const EMULATOR_HOST = (typeof window !== 'undefined' && window?.location?.hostname)
+    ? window.location.hostname
+    : (process.env.EXPO_PUBLIC_FIREBASE_HOST || 'localhost');
 
 const CLOUD_FUNCTION_URL = USE_EMULATOR
     ? `http://${EMULATOR_HOST}:5001/poppin-80886/us-central1/get_events_v1`
