@@ -3,7 +3,16 @@ import { db } from './firebase';
 import { IEventService } from './EventService';
 import { Event, GeoPoint } from '../types';
 
-const CLOUD_FUNCTION_URL = 'https://get-events-v1-ogyftm4hgq-uc.a.run.app';
+// Backend API URL
+// Default to Emulator (localhost) unless specified otherwise
+const USE_EMULATOR = process.env.EXPO_PUBLIC_USE_EMULATOR !== 'false';
+const EMULATOR_HOST = process.env.EXPO_PUBLIC_FIREBASE_HOST || 'localhost';
+
+const CLOUD_FUNCTION_URL = USE_EMULATOR
+    ? `http://${EMULATOR_HOST}:5001/poppin-80886/us-central1/get_events_v1`
+    : 'https://us-central1-poppin-80886.cloudfunctions.net/get_events_v1';
+
+console.log(`[FirebaseEventService] Mode: ${USE_EMULATOR ? 'EMULATOR' : 'PRODUCTION'} (Host: ${EMULATOR_HOST})`);
 
 export class FirebaseEventService implements IEventService {
     private city: string;
@@ -20,7 +29,6 @@ export class FirebaseEventService implements IEventService {
 
     // Live Subscription (SWR)
     subscribeToEvents(location: GeoPoint, onUpdate: (events: Event[]) => void): () => void {
-        console.log(`FirebaseEventService: Subscribing to events for ${this.city}`);
 
         // Trigger the "Stale Check" / Auto-Discovery via HTTP if needed
         // Debounce: Only trigger if we haven't checked for this city in the last 5 seconds
@@ -28,11 +36,8 @@ export class FirebaseEventService implements IEventService {
         const lastTrigger = this.lastFetchTrigger.get(this.city) || 0;
 
         if (now - lastTrigger > 5000) {
-            console.log(`FirebaseEventService: Triggering staleness check for ${this.city}`);
             this.fetchFromCloudFunction().catch(err => console.error("SWR Trigger failed", err));
             this.lastFetchTrigger.set(this.city, now);
-        } else {
-            console.log(`FirebaseEventService: Staleness check debounced for ${this.city}`);
         }
 
         const eventsRef = collection(db, 'events');
@@ -43,15 +48,15 @@ export class FirebaseEventService implements IEventService {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const events = this.parseEvents(snapshot);
-            console.log(`FirebaseEventService: Realtime update - ${events.length} events`);
             onUpdate(events);
+        }, (error) => {
+            console.error(`FirebaseEventService: Firestore subscription error for ${this.city}:`, error);
         });
 
         return unsubscribe;
     }
 
     async getEvents(location: GeoPoint, radiusKm: number = 10): Promise<Event[]> {
-        console.log(`FirebaseEventService: Fetching events for ${this.city}`);
 
         try {
             // First, try to get events from Firestore
@@ -102,7 +107,12 @@ export class FirebaseEventService implements IEventService {
                 sourceUrl: item.sourceUrl
             }));
         } catch (error) {
-            console.error("Error fetching from Cloud Function:", error);
+            console.error(`Error fetching ${this.city} from Cloud Function (${CLOUD_FUNCTION_URL}):`, error);
+            // If it's a network error (like Connection Refused), response won't exist
+            // but we can at least log that it's a network-level issue.
+            if (error instanceof Error) {
+                console.error("Error message:", error.message);
+            }
             return [];
         }
     }

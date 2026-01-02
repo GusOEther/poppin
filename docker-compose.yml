@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  poppin-dev:
+    build: .
+    volumes:
+      - .:/app
+      - /app/app/node_modules
+    environment:
+      - FIREBASE_TOKEN=${FIREBASE_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/functions/dummy_credentials.json
+      - EXPO_PUBLIC_USE_EMULATOR=true
+      - FIRESTORE_EMULATOR_HOST=localhost:8080
+      - PUBSUB_EMULATOR_HOST=localhost:8085
+      - EXPO_PUBLIC_FIREBASE_HOST=${EXPO_PUBLIC_FIREBASE_HOST:-localhost}
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+      - "8080:8080"
+      - "9099:9099"
+      - "5001:5001"
+    stdin_open: true
+    tty: true

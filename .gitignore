@@ -45,3 +45,4 @@ firebase-debug.*.log
 .vscode/
 .idea/
 *.log
+*.pem

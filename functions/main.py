@@ -1,14 +1,11 @@
 # The Cloud Functions for Firebase SDK to create Cloud Functions and set up triggers.
 from firebase_functions import https_fn, options, scheduler_fn, pubsub_fn
 from firebase_admin import initialize_app, firestore
-from google import genai
-from google.cloud import pubsub_v1
 import datetime
 import json
-import requests
 import os
 
-# Global app initialization done once
+# Global app initialization
 initialize_app()
 
 # Global Pub/Sub Publisher (Initialized lazily)
@@ -17,6 +14,7 @@ PROJECT_ID = os.environ.get("GCLOUD_PROJECT", "poppin-80886")
 TOPIC_ID = "fetch-events"
 
 def get_publisher():
+    from google.cloud import pubsub_v1
     global _publisher
     if _publisher is None:
         _publisher = pubsub_v1.PublisherClient()
@@ -66,6 +64,7 @@ def find_nearby_cities(lat, lng, radius_km=50):
     """
     Queries GeoNames for cities > 15k inhabitants.
     """
+    import requests
     url = "http://api.geonames.org/findNearbyPlaceNameJSON"
     params = {
         "lat": lat,
@@ -87,8 +86,9 @@ def fetch_events_via_gemini(city_name):
     Uses Gemini 1.5 with Search Grounding to find events using the new google.genai library.
     """
     if not GEMINI_API_KEY:
-        return {"error": "GEMINI_API_KEY not set"}
+        return json.dumps({"error": "GEMINI_API_KEY not set"})
     
+    from google import genai
     client = genai.Client(api_key=GEMINI_API_KEY)
     
     prompt = f"""
@@ -131,6 +131,19 @@ def get_events_v1(req: https_fn.Request) -> https_fn.Response:
     API Endpoint: Returns events for a location. 
     Implements Stale-While-Revalidate (SWR).
     """
+    # Handle CORS preflight
+    if req.method == 'OPTIONS':
+        return https_fn.Response(
+            status=204,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Max-Age': '3600'
+            }
+        )
+
+    print(f"DEBUG: get_events_v1 called from {req.remote_addr} with city={req.args.get('city')}")
     global _topic_checked
     
     # Accept city directly or fall back to lat/lng lookup
@@ -212,7 +225,9 @@ def process_and_save_events(city_name, raw_response):
     try:
         events = json.loads(json_str)
     except Exception as e:
-        print(f"JSON Parse Error: {e}. Raw: {raw_response[:200]}")
+        # Safeguard: ensure we are slicing a string
+        snippet = str(raw_response)[:200]
+        print(f"JSON Parse Error: {e}. Raw: {snippet}")
         return 0
         
     batch = get_db().batch()

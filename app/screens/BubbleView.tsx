@@ -425,23 +425,22 @@ export default function BubbleView() {
             { latitude: 52.268875, longitude: 10.526770 },
             (newEvents) => {
                 setEvents(newEvents);
-
-                // Only stop loading if we actually got data or if it's the initial empty update (which happens fast)
-                // Better strategy: Keep loading until we have events OR a timeout occurs? 
-                // Sonnet suggestion: if (initialLoad || newEvents.length > 0)
-                if (initialLoad || newEvents.length > 0) {
-                    setLoading(false);
-                    initialLoad = false;
-                }
-
-                // UX: Reset to main view if we get fresh content that changes the view significantly
-                // User Feedback: Keep modal OPEN if user is looking at details. The list behind updates silently.
-                // setModalVisible(false); // REMOVED per user request
+                setLoading(false);
+                initialLoad = false;
             }
         );
 
+        // Safety timeout for loading state
+        const timer = setTimeout(() => {
+            if (initialLoad) {
+                console.log('BubbleView: Loading timeout reached');
+                setLoading(false);
+            }
+        }, 8000);
+
         return () => {
             unsubscribe();
+            clearTimeout(timer);
         };
     }, [currentCity, eventService]); // Added eventService to dependency array
 
@@ -495,7 +494,7 @@ export default function BubbleView() {
                 )}
             </ScrollView>
 
-            <View style={styles.titleContainer} pointerEvents="none">
+            <View style={[styles.titleContainer, { pointerEvents: "none" }]}>
                 <Text style={styles.headerTitle}>{loading ? 'Poppin\'' : 'What\'s'}</Text>
                 <Text style={styles.headerTitle}>{loading ? '...' : 'poppin\''}</Text>
                 {!loading && <Text style={styles.citySubtitle}>{currentCity}</Text>}
@@ -521,7 +520,7 @@ export default function BubbleView() {
 
 
             {/* Filter Bar */}
-            <View style={styles.filterBarContainer} pointerEvents={modalVisible ? 'none' : 'auto'}>
+            <View style={[styles.filterBarContainer, { pointerEvents: modalVisible ? 'none' : 'auto' }]}>
                 {/* Date Segments */}
                 <View style={styles.dateSegmentContainer}>
                     <View style={styles.dateSegmentDecor} />
@@ -583,7 +582,7 @@ export default function BubbleView() {
                 </View>
             </View>
 
-            <View style={styles.header} pointerEvents={modalVisible ? 'none' : 'auto'}>
+            <View style={[styles.header, { pointerEvents: modalVisible ? 'none' : 'auto' }]}>
                 <TouchableOpacity onPress={() => { }}>
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
@@ -648,6 +647,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 15,
+        // boxShadow: '0 0 20px rgba(0,0,0,0.6)', // React Native Web / 0.75+ support
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.6,
         shadowRadius: 20,
@@ -658,6 +658,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
+        // textShadow: '0 1px 3px rgba(0,0,0,0.3)',
         textShadowColor: 'rgba(0,0,0,0.3)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 3,

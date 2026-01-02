@@ -8,8 +8,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Mock the firebase dependencies BEFORE importing main
-with patch('firebase_admin.initialize_app'), patch('firebase_admin.firestore.client'):
+with patch('firebase_admin.initialize_app'), patch('firebase_admin.firestore.client'), patch.dict('os.environ', {'GEMINI_API_KEY': 'test-key'}):
     import main
+    main.GEMINI_API_KEY = 'test-key' # Ensure it's set in the module scope
 
 @pytest.fixture
 def mock_db():
