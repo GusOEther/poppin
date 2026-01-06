@@ -63,34 +63,57 @@ EXPO_PUBLIC_FIREBASE_HOST=localhost
 
 > **Note:** The `dummy_credentials.json` is included in the repository with a self-generated fake key. No action needed.
 
-### 3. Start the Environment
+### 3. Start the Container
 
-**Option A: Two Terminals (Recommended)**
-
-*Terminal 1: Backend (Emulators)*
+Start the Docker container (this is fast after the first build):
 ```bash
-sudo docker-compose run --rm -p 5001:5001 -p 8080:8080 -p 8085:8085 -p 4000:4000 poppin-dev bash -c "apt-get update && apt-get install -y python3-venv && cd functions && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt python-dotenv firebase-admin google-genai && firebase emulators:start"
+docker-compose up -d
 ```
 
-*Terminal 2: Frontend (Expo Web)*
+> **Note:** The Docker image is cached locally. After the first build, subsequent starts are near-instant. Only rebuild with `docker-compose up -d --build` if you modify the `Dockerfile` or `package.json`.
+
+### 4. Start Services Inside the Container
+
+**Backend (Firebase Emulators):**
 ```bash
-sudo docker-compose run --rm -p 8081:8081 poppin-dev bash -c "cd app && npx expo start --web"
+docker exec -d poppin_poppin-dev_1 firebase emulators:start --project demo-poppin
 ```
 
-**Option B: Mobile Development (Expo Tunnel)**
-
-For testing on a physical mobile device via Expo Go:
+**Frontend (Expo Web):**
 ```bash
-sudo docker-compose run --rm -p 8081:8081 poppin-dev bash -c "cd app && npx expo start --tunnel"
+docker exec -d poppin_poppin-dev_1 bash -c "cd app && npx expo start --web"
 ```
 
-### 4. Access Points
+> **Tip:** Both commands run in the background (`-d` flag). Services start in 5-10 seconds.
+
+**Alternative: Mobile Development (Expo Tunnel)**
+
+For testing on a physical device via Expo Go:
+```bash
+docker exec -it poppin_poppin-dev_1 bash -c "cd app && npx expo start --tunnel"
+```
+
+### 5. Access Points
 | Service | URL |
 |---------|-----|
 | Frontend (Web) | http://localhost:8081 |
 | Functions | http://localhost:5001 |
 | Firestore Emulator | http://localhost:8080 |
 | Emulator UI | http://localhost:4000 |
+
+### 6. Stopping and Restarting
+
+**Stop all services:**
+```bash
+docker-compose down
+```
+
+**Restart the container:**
+```bash
+docker-compose up -d
+```
+
+> **Important:** Remember to restart the services inside the container after `docker-compose up -d` (see Step 4 above).
 
 ---
 
