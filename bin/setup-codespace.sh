@@ -6,10 +6,17 @@ echo "🚀 Starting Poppin Codespace Setup..."
 # 1. Setup Python Virtual Environment and install dependencies
 echo "🐍 Setting up Python environment..."
 cd functions
+if [ -d "venv" ] && [ ! -f "venv/bin/activate" ]; then
+    echo "⚠️  Existing venv is broken, removing..."
+    rm -rf venv
+fi
+
 if [ ! -d "venv" ]; then
+    echo "⚒️  Creating new venv..."
     python3 -m venv venv
 fi
 source venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt python-dotenv firebase-admin google-genai pytest
 cd ..
 
