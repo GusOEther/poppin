@@ -4,20 +4,33 @@
     "service": "poppin-dev",
     "workspaceFolder": "/app",
     "shutdownAction": "stopCompose",
+    "portsAttributes": {
+        "8081": {
+            "label": "Expo Web",
+            "onAutoForward": "notify"
+        },
+        "4000": {
+            "label": "Firebase Emulator UI",
+            "onAutoForward": "notify"
+        }
+    },
     "forwardPorts": [
         8081,
+        4000,
         5001,
         8080,
         8085,
-        4000
+        9099
     ],
-    "postCreateCommand": "cd functions && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt python-dotenv firebase-admin google-genai",
+    "postCreateCommand": "bash bin/setup-codespace.sh",
     "customizations": {
         "vscode": {
             "extensions": [
                 "dbaeumer.vscode-eslint",
                 "esbenp.prettier-vscode",
-                "ms-python.python"
+                "ms-python.python",
+                "googlecloudtools.cloudcode",
+                "expo.vscode-expo-tools"
             ]
         }
     },
