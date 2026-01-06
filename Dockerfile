@@ -3,7 +3,7 @@ FROM andreysenov/firebase-tools:latest
 USER root
 
 # Install python3-pip
-RUN apt-get update && apt-get install -y python3-pip curl procps
+RUN apt-get update && apt-get install -y python3-pip curl procps git
 
 # Set working directory
 WORKDIR /app

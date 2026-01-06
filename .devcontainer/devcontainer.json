@@ -29,6 +29,7 @@
                 "dbaeumer.vscode-eslint",
                 "esbenp.prettier-vscode",
                 "ms-python.python",
+                "ms-toolsai.jupyter",
                 "googlecloudtools.cloudcode",
                 "expo.vscode-expo-tools"
             ]
