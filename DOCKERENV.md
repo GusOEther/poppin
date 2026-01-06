@@ -17,11 +17,20 @@ Ensure you have your API keys set in GitHub:
 2. Add `GEMINI_API_KEY`.
 
 ### 3. Start the Environment
-The `bin/setup-codespace.sh` script runs automatically on creation, but you can run it manually if needed:
-```bash
-bash bin/setup-codespace.sh
-```
 
+You have three ways to start the services:
+
+#### Option A: One-Click (VS Code Tasks)
+1. Press `Ctrl+Shift+P` (or `Cmd+Shift+P`).
+2. Type **"Run Task"** and select it.
+3. Choose **"🚀 Start Backend"** or **"📱 Start Frontend"**.
+
+#### Option B: Short Commands
+Run these in the terminal:
+- **Backend**: `./bin/dev-backend`
+- **Frontend**: `./bin/dev-frontend`
+
+#### Option C: Manual Commands (Standard)
 **Terminal 1: Backend (Emulators)**
 ```bash
 cd functions && source venv/bin/activate && firebase emulators:start

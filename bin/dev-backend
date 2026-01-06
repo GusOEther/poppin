@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "🔥 Starting Firebase Emulators..."
+cd functions
+source venv/bin/activate
+firebase emulators:start

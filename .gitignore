@@ -43,6 +43,7 @@ firebase-debug.*.log
 # General
 .DS_Store
 .vscode/
+!.vscode/tasks.json
 .idea/
 *.log
 *.pem
