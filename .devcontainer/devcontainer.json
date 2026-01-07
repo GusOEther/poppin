@@ -4,6 +4,11 @@
     "service": "poppin-dev",
     "workspaceFolder": "/app",
     "shutdownAction": "stopCompose",
+    "features": {
+        "ghcr.io/devcontainers/features/sshd:1": {
+            "version": "latest"
+        }
+    },
     "portsAttributes": {
         "8081": {
             "label": "Expo Web",

@@ -16,8 +16,8 @@ if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt python-dotenv firebase-admin google-genai pytest
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 cd ..
 
 # 2. Setup Node dependencies for the app

@@ -3,3 +3,6 @@ firebase-admin
 google-genai
 requests
 google-cloud-pubsub
+
+python-dotenv
+pytest
