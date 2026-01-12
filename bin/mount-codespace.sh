@@ -32,8 +32,10 @@ sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -F $SSH_CONFIG $
 echo "✅ Success! Codespace mounted at: $MOUNT_POINT"
 
 echo "📡 Starting Port Forwarding (8081, 4000, 8080, 5001)..."
-# Forward ports in the background. Redirect output to avoid cluttering terminal.
-# We use a subshell to ensure it keeps running independently.
-(gh codespace ports forward 8081:8081 4000:4000 8080:8080 5001:5001 8085:8085 9099:9099 -c $CODESPACE_NAME > /dev/null 2>&1 &)
+# Kill previous forwarding processes to avoid "port already in use"
+pkill -f "gh codespace ports forward.*$CODESPACE_NAME" || true
+
+# Forward ports in the background using nohup to ensure it persists.
+nohup gh codespace ports forward 8081:8081 4000:4000 8080:8080 5001:5001 8085:8085 9099:9099 -c $CODESPACE_NAME > /dev/null 2>&1 &
 
 echo "🚀 Everything ready! Open http://localhost:8081"
