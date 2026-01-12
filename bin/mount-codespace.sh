@@ -21,8 +21,9 @@ mkdir -p $MOUNT_POINT
 
 # Check if already mounted
 if mount | grep -q "$MOUNT_POINT"; then
-    echo "⚠️  Already mounted. Unmounting first..."
-    fusermount -u $MOUNT_POINT || true
+    echo "⚠️  Already mounted. Unmounting (lazy)..."
+    fusermount -uz $MOUNT_POINT || true
+    sleep 1
 fi
 
 echo "🔗 Mounting Codespace to $MOUNT_POINT..."
