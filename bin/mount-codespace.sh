@@ -5,6 +5,11 @@ CODESPACE_NAME="literate-space-happiness-jpr5xrwq7qv3g45"
 MOUNT_POINT="/home/mark/poppin/remote_codespace"
 SSH_CONFIG="/home/mark/.ssh/config_codespaces"
 
+echo "🔍 Checking Codespace status..."
+# Attempt to run a dummy command. If the codespace is stopped, this will trigger the interactive "starting..." flow or fail if non-interactive.
+# We trust gh CLI to handle the "Starting codespace..." spinner usually.
+gh codespace ssh -c $CODESPACE_NAME -- echo "✅ Codespace is active"
+
 echo "🔄 Refreshing SSH config related to Codespace..."
 gh codespace ssh -c $CODESPACE_NAME --config > $SSH_CONFIG
 
@@ -21,7 +26,7 @@ if mount | grep -q "$MOUNT_POINT"; then
 fi
 
 echo "🔗 Mounting Codespace to $MOUNT_POINT..."
-sshfs -F $SSH_CONFIG $HOST_ALIAS:/app $MOUNT_POINT
+sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -F $SSH_CONFIG $HOST_ALIAS:/app $MOUNT_POINT
 
 echo "✅ Success! Codespace mounted at: $MOUNT_POINT"
 echo "   (You can edit files there now)"
