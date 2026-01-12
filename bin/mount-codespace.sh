@@ -31,9 +31,9 @@ sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -F $SSH_CONFIG $
 
 echo "✅ Success! Codespace mounted at: $MOUNT_POINT"
 
-echo "📡 Starting Port Forwarding (8081: Frontend, 4000: Emulator UI)..."
+echo "📡 Starting Port Forwarding (8081, 4000, 8080, 5001)..."
 # Forward ports in the background. Redirect output to avoid cluttering terminal.
 # We use a subshell to ensure it keeps running independently.
-(gh codespace ports forward 8081:8081 4000:4000 -c $CODESPACE_NAME > /dev/null 2>&1 &)
+(gh codespace ports forward 8081:8081 4000:4000 8080:8080 5001:5001 8085:8085 9099:9099 -c $CODESPACE_NAME > /dev/null 2>&1 &)
 
 echo "🚀 Everything ready! Open http://localhost:8081"
