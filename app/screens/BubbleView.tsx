@@ -41,66 +41,121 @@ const generateBubblePositions = (events: Event[], screenWidth: number, screenHei
     }[] = [];
 
     const startY = 180;
-    const rowHeight = 110;
-    const paddingHorizontal = 40;
-    const contentWidth = screenWidth - paddingHorizontal * 2;
+    const minPadding = 15;
+    // Dynamic spacing: fewer events = more space, more events = tighter packing
+    const spacingBuffer = Math.max(10, Math.min(45, 50 - events.length * 1.5));
 
-    // Determine how many rows we need. We want to fit at least all events + some placeholders.
-    const eventsPerRow = 2.5; // Average
-    const neededRows = Math.max(7, Math.ceil(events.length / 1.5)); // More rows than strictly needed for spacing
+    // Collision check helper
+    const checkOverlap = (x: number, y: number, size: number): boolean => {
+        for (const b of bubbles) {
+            const dx = b.x - x;
+            const dy = b.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const minDist = (b.size + size) / 2 + spacingBuffer;
+            if (dist < minDist) return true;
+        }
+        return false;
+    };
 
-    let eventIndex = 0;
+    // --- FOREGROUND LAYER (Events) - JITTERED STAGGERED GRID ---
+    const fgXPadding = 40;
+    const fgYMin = startY + 20;
 
-    for (let row = 0; row < neededRows; row++) {
-        const isStaggered = row % 2 === 1;
-        const colsInRow = isStaggered ? 2 : 3;
-        const cellWidth = contentWidth / (colsInRow);
-        const rowXOffset = paddingHorizontal + (isStaggered ? cellWidth / 2 : 0);
+    // Dynamic grid dimensions based on event count
+    const idealCellSize = 130; // Base space for 100px bubble + spacing
+    const cols = Math.max(2, Math.floor((screenWidth - fgXPadding * 2) / idealCellSize));
+    const rows = Math.ceil(events.length / cols) + 1;
+    const cellWidth = (screenWidth - fgXPadding * 2) / cols;
+    const cellHeight = 140; // Vertical spacing
 
-        for (let col = 0; col < colsInRow; col++) {
-            const remainingEvents = events.length - eventIndex;
+    // Create a list of available grid slots
+    const slots: { r: number, c: number }[] = [];
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            slots.push({ r, c });
+        }
+    }
 
-            // Randomly decide if this slot is an event or placeholder
-            // Higher chance for event if we have many left
-            const isEventSlot = remainingEvents > 0 && (Math.random() > 0.3 || remainingEvents > (neededRows - row) * 2);
-            const isPlaceholder = !isEventSlot;
+    // Sort slots Inside-Out (center first)
+    const centerCol = (cols - 1) / 2;
+    const centerRow = (rows - 1) / 2;
+    slots.sort((a, b) => {
+        const distA = Math.sqrt(Math.pow(a.c - centerCol, 2) + Math.pow(a.r - centerRow, 2));
+        const distB = Math.sqrt(Math.pow(b.c - centerCol, 2) + Math.pow(b.r - centerRow, 2));
+        return distA - distB;
+    });
 
-            let x = rowXOffset + col * cellWidth;
-            let y = startY + row * rowHeight + rowHeight / 2;
+    for (let i = 0; i < events.length; i++) {
+        const event = events[i];
+        const baseSize = 75 + Math.min(event.title.length * 1.2, 40);
+        const size = baseSize + Math.random() * 15;
+        let placed = false;
 
-            // Add some jitter
-            x += (Math.random() - 0.5) * cellWidth * 0.3;
-            y += (Math.random() - 0.5) * rowHeight * 0.3;
+        // Try slots in order from center
+        for (const slot of slots) {
+            if (placed) break;
 
-            const size = isPlaceholder
-                ? 40 + Math.random() * 30
-                : 90 + Math.random() * 30;
+            const isStaggered = slot.r % 2 === 1;
+            const rowOffset = isStaggered ? cellWidth / 2 : 0;
 
-            const configIndex = (row * 3 + col) % BUBBLE_CONFIGS.length;
-            const config = BUBBLE_CONFIGS[configIndex];
+            // Base position in grid
+            const baseX = fgXPadding + slot.c * cellWidth + cellWidth / 2 + rowOffset;
+            const baseY = fgYMin + slot.r * cellHeight + cellHeight / 2;
 
-            if (isEventSlot) {
-                bubbles.push({
-                    event: events[eventIndex],
-                    x,
-                    y,
-                    size,
-                    isPlaceholder: false,
-                    config
-                });
-                eventIndex++;
-            } else {
+            // Try multiple jitters within this slot
+            for (let attempt = 0; attempt < 15; attempt++) {
+                // High jitter (up to 40% of cell)
+                const jitterX = (Math.random() - 0.5) * cellWidth * 0.8;
+                const jitterY = (Math.random() - 0.5) * cellHeight * 0.8;
+
+                const x = Math.max(size / 2 + 10, Math.min(screenWidth - size / 2 - 10, baseX + jitterX));
+                const y = baseY + jitterY;
+
+                if (!checkOverlap(x, y, size)) {
+                    bubbles.push({
+                        event: event,
+                        x,
+                        y,
+                        size,
+                        isPlaceholder: false,
+                        config: BUBBLE_CONFIGS[i % BUBBLE_CONFIGS.length]
+                    });
+                    placed = true;
+                    // Remove slot so it's not used again
+                    slots.splice(slots.indexOf(slot), 1);
+                    break;
+                }
+            }
+        }
+    }
+
+    // --- BACKGROUND LAYER (Placeholders) - FILL AROUND EVENTS ---
+    const bgCount = 45;
+    const bgYMax = screenHeight - 50;
+
+    for (let i = 0; i < bgCount; i++) {
+        const size = 25 + Math.random() * 40;
+        let placed = false;
+
+        for (let attempt = 0; attempt < 50 && !placed; attempt++) {
+            const x = minPadding + size / 2 + Math.random() * (screenWidth - minPadding * 2 - size);
+            const y = startY + size / 2 + Math.random() * (bgYMax - startY - size);
+
+            if (!checkOverlap(x, y, size)) {
                 bubbles.push({
                     event: null,
                     x,
                     y,
                     size,
                     isPlaceholder: true,
-                    config
+                    config: BUBBLE_CONFIGS[Math.floor(Math.random() * BUBBLE_CONFIGS.length)]
                 });
+                placed = true;
             }
         }
+        // Background bubbles are optional - skip if no space
     }
+
     return bubbles;
 };
 
@@ -269,7 +324,7 @@ const Bubble = ({
                 { translateY: floatY.value },
                 { scale: scale.value }
             ],
-            zIndex: activeBubbleIndex.value === index ? 999 : 1
+            zIndex: activeBubbleIndex.value === index ? 999 : (item.isPlaceholder ? 0 : 10)
         };
     });
 
@@ -466,7 +521,7 @@ export default function BubbleView() {
     };
 
     const contentHeight = bubbleItems.length > 0
-        ? Math.max(height, Math.max(...bubbleItems.map(i => i.y + i.size))) + 150
+        ? Math.max(height, Math.max(...bubbleItems.map(i => i.y + i.size + 50)))
         : height;
 
     return (

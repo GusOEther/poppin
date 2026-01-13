@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, Modal, TouchableOpacity, ScrollView, Dimensions, Linking } from 'react-native';
+import { StyleSheet, View, Text, Modal, TouchableOpacity, ScrollView, Dimensions, Linking, TouchableWithoutFeedback } from 'react-native';
 import { Event } from '../types';
 
 interface EventDetailModalProps {
@@ -20,53 +20,50 @@ export default function EventDetailModal({ event, visible, onClose }: EventDetai
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-                    <View style={styles.handle} />
+            <TouchableWithoutFeedback onPress={onClose}>
+                <View style={styles.centeredView}>
+                    <TouchableWithoutFeedback>
+                        <View style={styles.modalView}>
+                            <View style={styles.handle} />
 
-                    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                        <Text style={styles.category}>{event.category}</Text>
-                        <Text style={styles.title}>{event.title}</Text>
+                            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                                <Text style={styles.category}>{event.category}</Text>
+                                <Text style={styles.title}>{event.title}</Text>
 
-                        <View style={styles.infoRow}>
-                            <Text style={styles.label}>Time:</Text>
-                            <Text style={styles.value}>
-                                {new Date(event.startTime).toLocaleDateString('de-DE', {
-                                    weekday: 'long',
-                                    day: '2-digit',
-                                    month: 'long',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </Text>
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.label}>Time:</Text>
+                                    <Text style={styles.value}>
+                                        {new Date(event.startTime).toLocaleDateString('de-DE', {
+                                            weekday: 'long',
+                                            day: '2-digit',
+                                            month: 'long',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.infoRow}>
+                                    <Text style={styles.label}>Location:</Text>
+                                    <Text style={styles.value}>{event.address || event.city}</Text>
+                                </View>
+
+                                <Text style={styles.descriptionHeader}>About this event:</Text>
+                                <Text style={styles.description}>{event.description}</Text>
+
+                                {event.sourceUrl && (
+                                    <TouchableOpacity
+                                        style={styles.button}
+                                        onPress={() => Linking.openURL(event.sourceUrl!)}
+                                    >
+                                        <Text style={styles.buttonText}>View Source</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </ScrollView>
                         </View>
-
-                        <View style={styles.infoRow}>
-                            <Text style={styles.label}>Location:</Text>
-                            <Text style={styles.value}>{event.address || event.city}</Text>
-                        </View>
-
-                        <Text style={styles.descriptionHeader}>About this event:</Text>
-                        <Text style={styles.description}>{event.description}</Text>
-
-                        {event.sourceUrl && (
-                            <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => Linking.openURL(event.sourceUrl!)}
-                            >
-                                <Text style={styles.buttonText}>View Source</Text>
-                            </TouchableOpacity>
-                        )}
-                    </ScrollView>
-
-                    <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={onClose}
-                    >
-                        <Text style={styles.closeButtonText}>Close</Text>
-                    </TouchableOpacity>
+                    </TouchableWithoutFeedback>
                 </View>
-            </View>
+            </TouchableWithoutFeedback>
         </Modal>
     );
 }
@@ -152,14 +149,5 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontWeight: 'bold',
         fontSize: 16,
-    },
-    closeButton: {
-        marginTop: 10,
-        padding: 15,
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        color: '#666',
-        fontSize: 14,
     },
 });
