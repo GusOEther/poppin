@@ -1,4 +1,0 @@
-#!/bin/bash
-echo "📱 Starting Expo Web..."
-cd app
-npx expo start --web

@@ -25,12 +25,17 @@ In this mode, both the code execution and the terminal exist on GitHub's servers
 
 **Terminal 1: Start Backend**
 ```bash
-./bin/dev-backend
+./bin/dev-backend.sh
 ```
 
 **Terminal 2: Start Frontend**
 ```bash
-./bin/dev-frontend
+./bin/dev-frontend.sh
+```
+
+**Stop Everything**
+```bash
+./bin/stop-dev.sh
 ```
 
 ---
@@ -57,18 +62,18 @@ Since the environment lives inside the container, you must execute commands ther
 
 **To Start Backend:**
 ```bash
-docker exec -it poppin-dev ./bin/dev-backend
+docker exec -it poppin-dev ./bin/dev-backend.sh
 ```
 *Or enter the shell first:*
 ```bash
 docker exec -it poppin-dev bash
 # Now you are inside the container
-./bin/dev-backend
+./bin/dev-backend.sh
 ```
 
 **To Start Frontend:**
 ```bash
-docker exec -it poppin-dev ./bin/dev-frontend
+docker exec -it poppin-dev ./bin/dev-frontend.sh
 ```
 
 ### 4. Access Points
@@ -100,13 +105,24 @@ Run this script to connect:
 
 This mounts the remote folder to `./remote_codespace`.
 
-### 3. Edit Files
+### 3. Cleanup & Shutdown
+Run this script to disconnect and stop the remote compute:
+```bash
+./bin/dismount-codespace.sh
+```
+**Where to run**: Run this in your **Antigravity Terminal** or local host.
+
+### 4. Edit Files
 Open the `remote_codespace` folder in Antigravity. Any edits you make here are instantly saved to the cloud.
 
-### 4. Run Commands
-You **cannot** run the servers from your local terminal. You must use the cloud terminal.
-1. Run `gh codespace ssh` to open a remote shell.
-2. Run `./bin/dev-backend` etc. inside that shell.
+### 5. Run Commands
+The scripts in `bin/` are "smart"—if you run them from your local host terminal, they will automatically proxy the command to the Codespace via SSH.
+
+- To Start Backend: `./bin/dev-backend.sh`
+- To Start Frontend: `./bin/dev-frontend.sh`
+- To Stop Services: `./bin/stop-dev.sh`
+
+*Alternatively, you can manually SSH in: `gh codespace ssh`*
 
 ---
 
@@ -116,4 +132,4 @@ You **cannot** run the servers from your local terminal. You must use the cloud 
 |-------|----------|
 | **Secrets not found** | Ensure `GEMINI_API_KEY` is in GitHub Codespaces Secrets or local `.env`. |
 | **Permission Denied (Local)** | Run `chmod +x bin/*`. |
-| **Port Conflicts (Local)** | Ensure no other service is using port 8080 or 4000. |
+| **Port Conflicts (Local)** | The scripts now automatically try to kill zombie emulator processes. If it fails, run `fuser -k 4000/tcp 8080/tcp 8085/tcp`. |
