@@ -394,18 +394,31 @@ const BubbleList = ({ items, onPress }: { items: any[], onPress: (event: Event) 
     );
 };
 
-export default function BubbleView() {
+interface BubbleViewProps {
+    isSearchVisible?: boolean;
+    onToggleSearch?: () => void;
+}
+
+export default function BubbleView({ isSearchVisible = false, onToggleSearch }: BubbleViewProps) {
     const [events, setEvents] = useState<Event[]>([]);
     const [bubbleItems, setBubbleItems] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
-    const [searchVisible, setSearchVisible] = useState(false);
+    // const [searchVisible, setSearchVisible] = useState(false); // Controlled by parent
     const [searchQuery, setSearchQuery] = useState('');
+
     const [loading, setLoading] = useState(false);
     const [currentCity, setCurrentCity] = useState('Braunschweig');
     const [filterDate, setFilterDate] = useState<'today' | 'tomorrow' | 'weekend' | 'all'>('all');
     const [filterCategory, setFilterCategory] = useState<string | null>(null);
     const eventService = useRef(new FirebaseEventService(currentCity)).current;
+
+    // Clear search query when search bar is closed
+    useEffect(() => {
+        if (!isSearchVisible) {
+            setSearchQuery('');
+        }
+    }, [isSearchVisible]);
 
     // Filter logic
     useEffect(() => {
@@ -510,7 +523,8 @@ export default function BubbleView() {
     const handleSearch = () => {
         if (searchQuery.trim()) {
             loadEvents(searchQuery.trim());
-            setSearchVisible(false);
+            // setSearchVisible(false);
+            onToggleSearch && onToggleSearch(); // Signal parent to close
             setSearchQuery('');
         }
     };
@@ -555,21 +569,28 @@ export default function BubbleView() {
                 {!loading && <Text style={styles.citySubtitle}>{currentCity}</Text>}
             </View>
 
-            {searchVisible && (
-                <View style={styles.searchBarContainer}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search city..."
-                        placeholderTextColor="rgba(255,255,255,0.5)"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        onSubmitEditing={handleSearch}
-                        autoFocus
+            {isSearchVisible && (
+                <>
+                    <TouchableOpacity
+                        style={styles.searchBackdrop}
+                        onPress={onToggleSearch}
+                        activeOpacity={1}
                     />
-                    <TouchableOpacity onPress={handleSearch} style={styles.searchSubmitButton}>
-                        <Ionicons name="arrow-forward" size={24} color="#FFF" />
-                    </TouchableOpacity>
-                </View>
+                    <View style={styles.searchBarContainer}>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search city..."
+                            placeholderTextColor="rgba(255,255,255,0.5)"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            onSubmitEditing={handleSearch}
+                            autoFocus
+                        />
+                        <TouchableOpacity onPress={handleSearch} style={styles.searchSubmitButton}>
+                            <Ionicons name="arrow-forward" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    </View>
+                </>
             )}
 
 
@@ -637,14 +658,12 @@ export default function BubbleView() {
                 </View>
             </View>
 
-            <View style={[styles.header, { pointerEvents: modalVisible ? 'none' : 'auto' }]}>
-                <TouchableOpacity onPress={() => { }}>
-                    <Ionicons name="arrow-back" size={24} color="#FFF" />
-                </TouchableOpacity>
+            {/* Header Search Button Moved to HamburgerMenu / Global Header */}
+            {/* <View style={[styles.header, { pointerEvents: modalVisible ? 'none' : 'auto' }]}>
                 <TouchableOpacity onPress={() => setSearchVisible(!searchVisible)}>
                     <Ionicons name={searchVisible ? "close" : "search"} size={24} color="#FFF" />
                 </TouchableOpacity>
-            </View>
+            </View> */}
 
             <EventDetailModal
                 event={selectedEvent}
@@ -726,6 +745,15 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
         letterSpacing: 2,
     },
+    searchBackdrop: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'transparent',
+        zIndex: 19,
+    },
     searchBarContainer: {
         position: 'absolute',
         top: 100,
@@ -747,7 +775,9 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 18,
         fontWeight: '500',
-    },
+        borderWidth: 0,
+        outlineWidth: 0,
+    } as any,
     searchSubmitButton: {
         width: 40,
         height: 40,
@@ -777,7 +807,7 @@ const styles = StyleSheet.create({
     },
     filterBarContainer: {
         position: 'absolute',
-        bottom: 120, // Just above the tab bar (which is 90 + margin)
+        bottom: 40, // Moved to bottom as per user request
         left: 20,
         right: 20,
         height: 60,
