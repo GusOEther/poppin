@@ -8,7 +8,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 if [ ! -f "/.dockerenv" ] && [ "$CODESPACES" != "true" ]; then
     CODESPACE_NAME="literate-space-happiness-jpr5xrwq7qv3g45"
     echo "☁️  Executing remotely inside Codespace ($CODESPACE_NAME)..."
-    gh codespace ssh -c "$CODESPACE_NAME" -- "cd /app && ./bin/dev-backend.sh"
+    gh codespace ssh -c "$CODESPACE_NAME" -- -L 4000:localhost:4000 -L 5001:localhost:5001 -L 8080:localhost:8080 -L 8085:localhost:8085 -L 9099:localhost:9099 "cd /app && ./bin/dev-backend.sh"
     exit 0
 fi
 
