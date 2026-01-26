@@ -19,15 +19,35 @@ HOST_ALIAS=$(awk '/^Host / {print $2; exit}' $SSH_CONFIG)
 echo "📂 Ensuring mount point exists..."
 mkdir -p $MOUNT_POINT
 
-# Check if already mounted
+# Check for stale mount or existing connection
 if mount | grep -q "$MOUNT_POINT"; then
-    echo "⚠️  Already mounted. Unmounting (lazy)..."
-    fusermount -uz $MOUNT_POINT || true
+    echo "🔍 Checking mount health..."
+    if ! timeout 2 ls "$MOUNT_POINT" >/dev/null 2>&1; then
+        echo "⚠️  Mount point is stale (Transport endpoint is not connected). Cleaning up..."
+        fusermount -uz "$MOUNT_POINT" || true
+        # Also kill any sshfs processes that might be hanging
+        pkill -f "sshfs.*$MOUNT_POINT" || true
+    else
+        echo "✅ Mount is healthy. Re-mounting to ensure fresh session..."
+        fusermount -uz "$MOUNT_POINT" || true
+    fi
     sleep 1
 fi
 
+# Ensure no orphan sshfs processes are targeting this mount point
+pkill -f "sshfs.*$MOUNT_POINT" || true
+
 echo "🔗 Mounting Codespace to $MOUNT_POINT..."
-sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 -F $SSH_CONFIG $HOST_ALIAS:/app $MOUNT_POINT
+# We disable ControlMaster because it can cause hangs with sshfs.
+sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+      -o ControlMaster=no \
+      -F $SSH_CONFIG $HOST_ALIAS:/app $MOUNT_POINT
+
+# Verify mount success
+if ! mount | grep -q "$MOUNT_POINT"; then
+    echo "❌ Failed to mount $MOUNT_POINT. Check $SSH_CONFIG and codespace status."
+    exit 1
+fi
 
 echo "✅ Success! Codespace mounted at: $MOUNT_POINT"
 

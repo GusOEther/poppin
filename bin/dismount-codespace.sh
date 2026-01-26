@@ -13,9 +13,20 @@ fi
 echo "📂 Unmounting Codespace from $MOUNT_POINT..."
 if mount | grep -q "$MOUNT_POINT"; then
     fusermount -uz "$MOUNT_POINT"
+    # Wait a moment and force kill any hanging sshfs processes
+    sleep 1
+    pkill -f "sshfs.*$MOUNT_POINT" || true
+    
+    if mount | grep -q "$MOUNT_POINT"; then
+        echo "⚠️  Lazy unmount failed to clear mount point entry. Attempting one last cleanup..."
+        pkill -KILL -f "sshfs.*$MOUNT_POINT" || true
+        sleep 1
+    fi
     echo "✅ Unmounted."
 else
-    echo "ℹ️  $MOUNT_POINT was not mounted."
+    # Even if not in 'mount', there might be orphaned sshfs processes
+    echo "ℹ️  $MOUNT_POINT was not in mount table, cleaning up any orphan processes..."
+    pkill -f "sshfs.*$MOUNT_POINT" || true
 fi
 
 echo "📡 Stopping Port Forwarding..."
