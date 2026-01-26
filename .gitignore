@@ -24,6 +24,12 @@ MANIFEST
 .venv
 env/
 venv/
+functions/google/
+functions/pygments/
+functions/websockets/
+functions/pyasn1/
+functions/urllib3/
+functions/__pycache__/
 ENV/
 env.bak/
 venv.bak/
